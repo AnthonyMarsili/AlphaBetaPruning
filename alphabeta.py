@@ -1,5 +1,7 @@
 import os
 
+touches = 0
+
 class Node(object):
     def __init__(self, data, minMax):
         self.data = data
@@ -35,12 +37,12 @@ def generateTree(tree):
         nodeList.append(newNode)
 
     nodeList[0].isRoot = True # the first node in this list will always be the root, I think
-
     for edge in edges:
         edge = edge.split(',') # splits each individual edge into parent and child
         parent = edge[0]
         child = edge[1]
 
+        
         for node in nodeList: # finding the parent node of this edge in our pre-existing list of nodes
             if node.data == parent:
                 parentNode = node
@@ -60,27 +62,35 @@ def generateTree(tree):
 
     return nodeList
 
-def alpha_beta(current, alpha, beta):
-    if current.isRoot is True:
-        print("current is root")
-        alpha = float('-inf')
-        beta = float('inf')
-    if current.isLeaf is True:
-        print("current is a leaf ", current.data)
-        return float(current.data)
-    if current.maxMin == 'MAX':
-        for child in current.children:
-            alpha = max(alpha, alpha_beta(child, alpha, beta))
-            if alpha >= beta:
-                print("cutting search below ", current.data)
-                #cutSearchBelow(current)
 
-    if current.maxMin == 'MIN':
-        for child in current.children:
-            beta = min(beta, alpha_beta(child, alpha, beta))
-            if beta <= alpha:
-                print("cutting search below ", current.data)
-                #cutSearchBelow(current)
+def alpha_beta(current_node, alpha, beta): #, nodes_left):
+
+        if (current_node.isRoot):
+            alpha = float((-1) - (2**63))
+            beta = float((-1) + (2**63))
+        if (current_node.isLeaf):      #if current node is leaf node:
+            global touches
+            touches +=1 
+            return int(current_node.data)       #return static evaluation of current node
+        if current_node.maxMin == 'MAX':
+            for child in current_node.children:
+                alpha = max(alpha, alpha_beta(child, alpha, beta)) #compare children values
+                if alpha >= beta:
+                    return alpha
+            return alpha
+        if current_node.maxMin == 'MIN':
+            for child in current_node.children:
+                beta = min(beta, alpha_beta(child, alpha, beta))    #compsare children values
+                if alpha >= beta:
+                    return beta
+            return beta
+
+
+def printScore(graph, score):
+    f = open("alpha_beta_out.txt", mode='a+')
+    string = "Graph: %d, Score: %d, Nodes visited: %d \n" %(graph, score, touches)
+    f.write(string)
+    
 
 def main():
     cwd = os.getcwd().replace('\\', '/') # gets the current working directory of this python file
@@ -88,10 +98,14 @@ def main():
     f1 = open(cwd + "/alphabeta.txt", mode='r')
 
     treeData = [line.rstrip('\n') for line in f1] # each index of treeData contains the 2 sets needed for that treeData
-
+    graph = 0
     for tree in treeData:
+        global touches
+        touches = 0
         nodeList = generateTree(tree)
-        alpha_beta(nodeList[0], 0, 0)
+        graph += 1
+        score = alpha_beta(nodeList[0], 0, 0)
+        printScore(graph, score)
 
 
 
