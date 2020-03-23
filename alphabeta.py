@@ -18,6 +18,70 @@ def isNum(s): # function used when checking if the child value of an edge is a r
     except ValueError:
         return False
 
+def generateTree(tree):
+    nodeList = []
+
+    tree = tree.replace('{', '')
+    tree = tree.replace(')}', ' ')
+    tree = tree.replace('(', '')
+    tree = tree.split() # splits into node and tree lists
+
+    nodes = tree[0].split('),') # splits the indiviual nodes and edges
+    edges = tree[1].split('),')
+
+    for node in nodes:
+        node = node.split(',') # splits each individual node into data and minMax values
+        newNode = Node(node[0], node[1])
+        nodeList.append(newNode)
+
+    nodeList[0].isRoot = True # the first node in this list will always be the root, I think
+
+    for edge in edges:
+        edge = edge.split(',') # splits each individual edge into parent and child
+        parent = edge[0]
+        child = edge[1]
+
+        for node in nodeList: # finding the parent node of this edge in our pre-existing list of nodes
+            if node.data == parent:
+                parentNode = node
+                break
+
+        if isNum(child): # if the child of the edge is a number, then it will be a leaf
+            newNode = Node(child, None) # create a new node for the leaf
+            newNode.isLeaf = True # specify that it is a leaf
+            parentNode.addChild(newNode) # this should add itself to the children list of its parent node
+
+        else: # if the child is a node rather than a number (i.e. it is not a leaf)
+            for node in nodeList:
+                if node.data == child:
+                    childNode = node # find which pre-existing node is the child of this edge
+                    parentNode.addChild(childNode) # create the edge
+                    break # break out of this for loop because we already created the edge
+
+    return nodeList
+
+def alpha_beta(current, alpha, beta):
+    if current.isRoot is True:
+        print("current is root")
+        alpha = float('-inf')
+        beta = float('inf')
+    if current.isLeaf is True:
+        print("current is a leaf ", current.data)
+        return float(current.data)
+    if current.maxMin == 'MAX':
+        for child in current.children:
+            alpha = max(alpha, alpha_beta(child, alpha, beta))
+            if alpha >= beta:
+                print("cutting search below ", current.data)
+                #cutSearchBelow(current)
+
+    if current.maxMin == 'MIN':
+        for child in current.children:
+            beta = min(beta, alpha_beta(child, alpha, beta))
+            if beta <= alpha:
+                print("cutting search below ", current.data)
+                #cutSearchBelow(current)
+
 def main():
     cwd = os.getcwd().replace('\\', '/') # gets the current working directory of this python file
 
@@ -26,45 +90,10 @@ def main():
     treeData = [line.rstrip('\n') for line in f1] # each index of treeData contains the 2 sets needed for that treeData
 
     for tree in treeData:
-        nodeList = []
-
-        tree = tree.replace('{', '')
-        tree = tree.replace(')}', ' ')
-        tree = tree.replace('(', '')
-        tree = tree.split() # splits into node and tree lists
-
-        nodes = tree[0].split('),') # splits the indiviual nodes and edges
-        edges = tree[1].split('),')
-
-        for node in nodes:
-            node = node.split(',') # splits each individual node into data and minMax values
-            newNode = Node(node[0], node[1])
-            nodeList.append(newNode)
-
-        nodeList[0].isRoot = True # the first node in this list will always be the root, I think
-
-        for edge in edges:
-            edge = edge.split(',') # splits each individual edge into parent and child
-            parent = edge[0]
-            child = edge[1]
-
-            for node in nodeList: # finding the parent node of this edge in our pre-existing list of nodes
-                if node.data == parent:
-                    parentNode = node
-                    break
-
-            if isNum(child): # if the child of the edge is a number, then it will be a leaf
-                newNode = Node(child, None) # create a new node for the leaf
-                newNode.isLeaf = True # specify that it is a leaf
-                parentNode.addChild(newNode) # this should add itself to the children list of its parent node
+        nodeList = generateTree(tree)
+        alpha_beta(nodeList[0], 0, 0)
 
 
-            else: # if the child is a node rather than a number (i.e. it is not a leaf)
-                for node in nodeList:
-                    if node.data == child:
-                        childNode = node # find which pre-existing node is the child of this edge
-                        parentNode.addChild(childNode) # create the edge
-                        break # break out of this for loop because we already created the edge
 
         # this prints the tree in the form "root, child, child, ..., child" each on a new line. followed by a line break before the next node
         # for node in nodeList:
